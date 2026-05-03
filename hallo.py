@@ -1,5 +1,10 @@
 from datetime import date, datetime, timedelta
 import yfinance as yf
+import logging
+import pandas as pd
+
+# Erzwingt die Anzeige aller Fehlermeldungen in der Konsole
+#logging.basicConfig(level=logging.DEBUG)
 
 symbol = input("Welches Wertpapier? ").upper()
 geburtstag = input("Wann wurdest du geboren? [YYYY-MM-DD]")
@@ -29,9 +34,6 @@ except Exception as e:
     print(f"Fehler Schritt 1: Das Kürzel '{symbol}' konnte nicht gefunden werden oder es gibt ein Netzwerkproblem.")
 
 try:
-    # Daten vom Yahoo Finance Server abrufen
-    ticker = yf.Ticker(symbol)
-    
     # Daten für diesen Zeitraum abrufen
     # Wir laden einen kleinen Puffer (z.B. 3 Tage), falls das Zieldatum ein Wochenende war
     start = start_datum
@@ -39,17 +41,17 @@ try:
 
     # Daten abrufen
     try:
-        data = yf.download(ticker, start=start, end=ende)
+        data = yf.download(symbol, start=start, end=ende, threads=False)
     except Exception as e:
-        print(f"Fehler Schritt 2: Der Abruf der historischen Daten ging schief.")
+        print(f"Fehler Schritt 2: Der Abruf der historischen Daten ging schief ({e})")
 
     # Den Preis extrahieren
     if not data.empty:
         # Wir nehmen den ersten verfügbaren Handelstag im Ergebnis
         erster_verfuegbarer_tag = data.index[0]
-        preis_geburt = data.loc[erster_verfuegbarer_tag, "Close"]
-        
-        print(f"Kurs von {ticker} am Geburtstag: {float(preis):.2f} {waehrung}")
+        preis_geburt = data.loc[erster_verfuegbarer_tag, 'Close'][symbol]
+
+        print(f"Kurs von {ticker} am Geburtstag: {preis_geburt:.2f} {waehrung}")
     else:
         print("Keine Daten gefunden. War die Börse vielleicht geschlossen?")
 
